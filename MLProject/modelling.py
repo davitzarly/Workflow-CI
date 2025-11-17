@@ -202,7 +202,7 @@ def save_model_locally(model, output_dir="model"):
 
 if __name__ == "__main__":
     # Konfigurasi
-    data_dir = "predictive_maintenance_preprocessing"
+    data_dir = os.path.join(os.path.dirname(__file__), "predictive_maintenance_preprocessing")
     experiment_name = "Predictive Maintenance - Basic"
     
     # Load data
