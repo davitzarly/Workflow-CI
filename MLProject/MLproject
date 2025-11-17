@@ -1,0 +1,20 @@
+name: Predictive Maintenance MLflow Project
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      data_dir:
+        type: str
+        default: "predictive_maintenance_preprocessing"
+      experiment_name:
+        type: str
+        default: "Predictive Maintenance CI"
+    command: "python modelling.py {data_dir} {experiment_name}"
+
+
+
+
+
+

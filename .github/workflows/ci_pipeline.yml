@@ -1,0 +1,29 @@
+name: MLflow CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  run-ml-model:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        pip install -r MLProject/requirements.txt || true
+        pip install mlflow scikit-learn pandas numpy
+
+    - name: Run MLProject
+      run: |
+        cd MLProject
+        python modelling.py
