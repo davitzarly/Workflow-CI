@@ -1,0 +1,5 @@
+name: hotel-booking-cancellation-ci
+
+entry_points:
+  main:
+    command: "python modelling.py"

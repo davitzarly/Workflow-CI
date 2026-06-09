@@ -1,0 +1,19 @@
+# Python cache/env files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# MLflow runtime outputs
+MLProject/mlruns/
+MLProject/latest_run_id.txt
+MLProject/metric_info.json
+
+# Keep compressed preprocessing data in Git, not large raw CSV exports.
+MLProject/namadataset_preprocessing/*.csv
+!MLProject/namadataset_preprocessing/*.csv.gz
+!MLProject/namadataset_preprocessing/*.csv.zip
+
+# Local OS files
+.DS_Store
+Thumbs.db

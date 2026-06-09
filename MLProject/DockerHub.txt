@@ -1,0 +1,7 @@
+Docker Hub image:
+
+https://hub.docker.com/r/<username-dockerhub>/hotel-booking-cancellation
+
+Catatan:
+- Isi URL ini setelah workflow advanced berhasil menjalankan `mlflow models build-docker` dan push image ke Docker Hub.
+- Secrets yang diperlukan di GitHub Actions: `DOCKERHUB_USERNAME` dan `DOCKERHUB_TOKEN`.

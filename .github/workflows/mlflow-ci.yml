@@ -1,0 +1,88 @@
+name: MLflow CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  train-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      DAGSHUB_REPO_OWNER: ${{ secrets.DAGSHUB_REPO_OWNER }}
+      DAGSHUB_REPO_NAME: ${{ secrets.DAGSHUB_REPO_NAME }}
+      DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_USER_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    steps:
+      - name: Run actions/checkout@v3
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.7"
+
+      - name: Check Env
+        run: |
+          python --version
+          pip --version
+
+      - name: Install dependencies
+        working-directory: MLProject
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Set MLflow Tracking URI
+        if: ${{ env.DAGSHUB_REPO_OWNER != '' && env.DAGSHUB_REPO_NAME != '' }}
+        working-directory: MLProject
+        run: |
+          echo "DAGSHUB_MLFLOW=true" >> "$GITHUB_ENV"
+          echo "DAGSHUB_REPO_OWNER=$DAGSHUB_REPO_OWNER" >> "$GITHUB_ENV"
+          echo "DAGSHUB_REPO_NAME=$DAGSHUB_REPO_NAME" >> "$GITHUB_ENV"
+
+      - name: Run mlflow project
+        working-directory: MLProject
+        run: mlflow run . --env-manager=local --experiment-name "Latihan Credit Scoring CI"
+
+      - name: Get latest MLflow run_id
+        working-directory: MLProject
+        run: |
+          python get_latest_run.py
+          cat latest_run_id.txt
+
+      - name: Install Python dependencies
+        working-directory: MLProject
+        run: pip install docker
+
+      - name: Upload MLflow artifacts to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-artifacts
+          path: |
+            MLProject/mlruns
+            MLProject/latest_run_id.txt
+
+      - name: Build Docker Model
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        working-directory: MLProject
+        run: |
+          RUN_ID=$(cat latest_run_id.txt)
+          mlflow models build-docker -m "runs:/$RUN_ID/model" -n hotel-booking-cancellation
+
+      - name: Log in to Docker Hub
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+
+      - name: Tag Docker Image
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        run: docker tag hotel-booking-cancellation ${{ env.DOCKERHUB_USERNAME }}/hotel-booking-cancellation:latest
+
+      - name: Push Docker Image
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        run: docker push ${{ env.DOCKERHUB_USERNAME }}/hotel-booking-cancellation:latest
